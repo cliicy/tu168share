@@ -36,6 +36,11 @@ invest_stock_ref_sh_margin_details = 'invest_ref_sh_margin_details'
 invest_stock_ref_fund_holdings = 'invest_ref_fund_holdings'
 invest_stock_ref_sz_margins = 'invest_ref_sz_margins'
 invest_stock_ref_sz_margin_details = 'invest_ref_sz_margin_details'
+lbh_top_list = 'lbh_top_list'
+lbh_inst_detail = 'lbh_inst_detail'
+lbh_inst_tops = 'lbh_inst_tops'
+lbh_broker_tops = 'lbh_broker_tops'
+lbh_cap_tops = 'lbh_cap_tops'
 
 ts.set_token(token)
 pro = ts.pro_api()
@@ -472,7 +477,8 @@ def get_sh_margins(start, end):
     投资参考 系列
     融资融券（沪市）:沪市融资融券汇总数据
     """
-    df = ts.sh_margins(start, end)
+    df = ts.sh_margins()
+    # df = ts.sh_margins(start, end)
     print(df)
     if df is not None:
         # 写入数据库
@@ -487,7 +493,8 @@ def get_sh_margin_details(start, end, symbol):
     投资参考 系列
     融资融券（沪市）:沪市融资融券明细数据
     """
-    df = ts.sh_margin_details(start, end, symbol)
+    # df = ts.sh_margin_details(start, end, symbol)
+    df = ts.sh_margin_details()
     print(df)
     if df is not None:
         # 写入数据库
@@ -502,7 +509,7 @@ def get_sz_margins(start, end):
     投资参考 系列
     融资融券（深市）:深市融资融券汇总数据
     """
-    df = ts.sz_margin(start, end)
+    df = ts.sz_margins(start, end)
     print(df)
     if df is not None:
         # 写入数据库
@@ -512,22 +519,104 @@ def get_sz_margins(start, end):
         print('获取沪市融资融券汇总数据: 开始时间：{0} 结束时间：{1}: {2}'.format(start, end, msg) + '\n')
 
 
-def get_sz_margin_details(start, end):
+def get_sz_margin_details(start):
     """
     投资参考 系列
     融资融券（深市）:深市融资融券明细数据
     """
-    df = ts.sz_margin_details(start, end)
+    df = ts.sz_margin_details(start)
     print(df)
     if df is not None:
         # 写入数据库
         res = df.to_sql(invest_stock_ref_sz_margin_details, engine, if_exists='append')
         # 三元表达式
         msg = 'ok' if res is None else res
-        print('获取沪市融资融券明细数据: 开始时间：{0} 结束时间：{1}: {2}'.format(start, end, msg) + '\n')
+        print('获取沪市融资融券明细数据: 开始时间：{0}  {1}'.format(start, msg) + '\n')
+
+
+def get_lbh_top_list(data):
+    """
+    按日期获取历史当日上榜的个股数据，
+    如果一个股票有多个上榜原因，则会出现该股票多条数据
+    """
+    df = ts.top_list(data)
+    print(df)
+    if df is not None:
+        # 写入数据库
+        res = df.to_sql(lbh_top_list, engine, if_exists='append')
+        # 三元表达式
+        msg = 'ok' if res is None else res
+        print('获取历史当日上榜的个股数据: 开始时间：{0}  {1}'.format(data, msg) + '\n')
+
+
+def get_lbh_inst_detail():
+    """
+    机构成交明细
+    获取最近一个交易日机构席位成交明细统计数据
+    """
+    df = ts.inst_detail()
+    print(df)
+    if df is not None:
+        # 写入数据库
+        res = df.to_sql(lbh_inst_detail, engine, if_exists='append')
+        # 三元表达式
+        msg = 'ok' if res is None else res
+        print('获取最近一个交易日机构席位成交明细统计数据：{0}'.format(msg) + '\n')
+
+
+def get_lbh_inst_tops(day):
+    """
+    机构席位追踪
+    获取机构近5、10、30、60日累积买卖次数和金额等情况。
+    """
+    df = ts.inst_tops(day)
+    print(df)
+    if df is not None:
+        # 写入数据库
+        res = df.to_sql(lbh_inst_tops, engine, if_exists='append')
+        # 三元表达式
+        msg = 'ok' if res is None else res
+        print('获取机构近 {0} 日累积买卖次数和金额等情况：{1}'.format(day, msg) + '\n')
+
+
+def get_lbh_broker_tops(day):
+    """
+    营业部上榜统计
+    获取营业部近5、10、30、60日上榜次数、累积买卖等情况。
+    """
+    df = ts.broker_tops(day)
+    print(df)
+    if df is not None:
+        # 写入数据库
+        res = df.to_sql(lbh_broker_tops, engine, if_exists='append')
+        # 三元表达式
+        msg = 'ok' if res is None else res
+        print('获取营业部近 {0} 日上榜次数、累积买卖等情况：{1}'.format(day, msg) + '\n')
+
+
+def get_lbh_cap_tops(day):
+    """
+    个股上榜统计
+    获取近5、10、30、60日个股上榜统计数据,包括上榜次数、
+    累积购买额、累积卖出额、净额、买入席位数和卖出席位数。
+    """
+    df = ts.cap_tops(day)
+    print(df)
+    if df is not None:
+        # 写入数据库
+        res = df.to_sql(lbh_cap_tops, engine, if_exists='append')
+        # 三元表达式
+        msg = 'ok' if res is None else res
+        print('获取近 {0} 日个股上榜统计数据,包括上榜次数、累积购买额、累积卖出额、净额、'
+              '买入席位数和卖出席位数：{1}'.format(day, msg) + '\n')
 
 
 if __name__ == "__main__":
+    # get_lbh_top_list('2018-08-01')
+    # get_lbh_inst_detail()
+    # get_lbh_inst_tops(60)
+    # get_lbh_broker_tops(5)
+    get_lbh_cap_tops(10)
     # get_stock_index()
     # get_industry_info()
     # get_concept_info()
@@ -551,11 +640,13 @@ if __name__ == "__main__":
     # get_ref_forecast_data(2018, 3)
     # get_ref_xsg(2018, 9)
     # get_ref_fund_holdings(2014, 3)
-
-    # get_sh_margins(start='2016-01-01', end='2018-09-30')
+    # HTTP Error 403: Forbidden
+    # get_sh_margins(start='2018-01-01', end='2018-09-30')
     # get_sh_margin_details(start='2018-08-01', end='2018-10-16', symbol='601989')
-    # get_sz_margins(start='2018-08-01', end='2018-09-30')
-    # get_sz_margin_details(start='2018-08-01', end='2018-10-16', symbol='601989')
+    #  HTTP Error 403: Forbidden
 
-    get_fq_data()
+    # get_sz_margins(start='2018-08-01', end='2018-09-30')
+    # get_sz_margin_details('2018-08-01')
+
+    # get_fq_data()
 
