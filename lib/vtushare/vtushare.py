@@ -29,9 +29,17 @@ class Tushare(object):
         # print(dir(self))
         print(self.__list_all_member())
 
+    def get_h_data(self):
+        print('stock_basic')
+        stock_bs.get_h_info()
+
     def stock_basic(self):
         print('stock_basic')
-        stock_bs.get_info()
+        stock_bs.update_stock_basic()
+
+    def industry_info(self):
+        print('get industry classified')
+        stock_bs.get_industry_info()
 
     def k1m_sync(self):
         print('sync kline: 1M')
@@ -40,6 +48,10 @@ class Tushare(object):
         for name in dir(self):
             print(name)
 
+    def fq_data(self):
+        print('get fq data')
+        stock_bs.get_hfq_info()
+        # stock_bs.get_fq_data()
 
 
 

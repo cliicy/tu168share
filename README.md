@@ -1,7 +1,7 @@
 #
 DIRECTORY STRUCTURE
 -------------------
-
+token: 47031bcac94db67f2ff5fd1afbf59c754fae3524438b1dbe048fba5b
 ```
 /
     conf                配置
@@ -34,5 +34,7 @@ tushare
 
 ## 相关文档
 * tushare: https://tushare.pro/document/2
+https://tushare.pro/document/1?doc_id=40 调取PRO版数据
+http://stock.eastmoney.com/report.html
 
 # TO BE CONTINUED
