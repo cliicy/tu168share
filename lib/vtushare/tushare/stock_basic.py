@@ -3,7 +3,7 @@ import pandas as pd
 import tushare as ts
 from lib.vtushare.db.DbHelper import DbHelper
 from conf.tushare import token
-
+from datetime import datetime, date, timedelta
 all_stocks_table_name = 'stock_industry'
 table_stock_basic = 'stock_basic'
 table_stock_data = 'data_stock'
@@ -78,9 +78,7 @@ def update_stock_basic():
     # 股票列表
     fields = 'ts_code,symbol,name,fullname,enname,exchange_id,curr_type,list_status,list_date,delist_date,is_hs'
     df = pro.stock_basic(fields=fields)
-    # 写入数据库
     res = df.to_sql(table_stock_basic, engine, if_exists='replace')
-    # 三元表达式
     msg = 'ok' if res is None else res
     print(msg)
 
@@ -88,9 +86,7 @@ def update_stock_basic():
 def get_industry_info():
     # 行业分类
     df = ts.get_industry_classified()
-    # 写入数据库
     res = df.to_sql('stock_industry', engine, if_exists='replace')
-    # 三元表达式
     msg = 'ok' if res is None else res
     print('获取行业分类: ' + msg + '\n')
 
@@ -98,9 +94,7 @@ def get_industry_info():
 def get_concept_info():
     # 概念分类
     df = ts.get_concept_classified()
-    # 写入数据库
     res = df.to_sql(all_concept_table, engine, if_exists='replace')
-    # 三元表达式
     msg = 'ok' if res is None else res
     print('获取概念分类: ' + msg + '\n')
     print(msg)
@@ -109,40 +103,49 @@ def get_concept_info():
 def get_arealist_info():
     # 地域分类
     df = ts.get_area_classified()
-    # 写入数据库
     res = df.to_sql(all_area_table, engine, if_exists='replace')
-    # 三元表达式
     msg = 'ok' if res is None else res
     print('获取地域分类: ' + msg + '\n')
     print(msg)
 
 
-def get_h_info():
+def get_h_info(start=None, end=None):
+    if start is None:
+        sqlstart = date.today()
+    if end is None:
+        sqlend = get_last_year_today()
     df1 = pd.read_sql(all_stocks_table_name, engine)
+    # df1 = pd.DataFrame({'code': [600656]})  # only for debug
     for scode in df1['code']:
         # print(scode)
-        df = ts.get_h_data(scode, start='2018-01-01', end='2018-10-15')
-        df.insert(0, 'ts_code', scode)
-        # 写入数据库
-        res = df.to_sql(table_stock_data, engine, if_exists='replace')
-        # 三元表达式
-        msg = 'ok' if res is None else res
-        print('write ' + scode + ' to history data table: '+msg+'\n')
+        df = ts.get_h_data(scode, start, end)
+        # print(df)
+        if len(df) > 0:
+            df.insert(0, 'ts_code', scode)
+            df.insert(1, 'start', sqlstart)
+            df.insert(2, 'end', sqlend)
+            res = df.to_sql(table_stock_data, engine, if_exists='replace')
+            msg = 'ok' if res is None else res
+            print('write ' + scode + ' to history data table: '+msg+'\n')
 
 
-def get_hfq_info():
+def get_hfq_info(start=None, end=None):
+    if start is None:
+        sqlstart = date.today()
+    if end is None:
+        sqlend = get_last_year_today()
     df1 = pd.read_sql(all_stocks_table_name, engine)
     for scode in df1['code']:
-        # print(scode)
-        df = ts.get_h_data(scode, start='2018-01-01', end='2018-10-15', autype='hfq')
-        df.insert(0, 'ts_code', scode)
-        df.rename(columns={'open': 'fopen', 'close': 'fclose', 'high': 'fhigh', 'low': 'flow'}, inplace=True)
-        # 写入数据库
-        res = df.to_sql(table_hfq_stock_data, engine, if_exists='replace')
-
-        # 三元表达式
-        msg = 'ok' if res is None else res
-        print('write ' + scode + ' to 后复权 历史数据: '+msg+'\n')
+        print(scode)
+        df = ts.get_h_data(scode, start, end, autype='hfq')
+        if len(df) > 0:
+            df.insert(0, 'ts_code', scode)
+            df.insert(1, 'start', sqlstart)
+            df.insert(2, 'end', sqlend)
+            df.rename(columns={'open': 'fopen', 'close': 'fclose', 'high': 'fhigh', 'low': 'flow'}, inplace=True)
+            res = df.to_sql(table_hfq_stock_data, engine, if_exists='replace')
+            msg = 'ok' if res is None else res
+            print('write ' + scode + ' to 后复权 历史数据: '+msg+'\n')
 
 
 def get_stock_index():
@@ -150,20 +153,13 @@ def get_stock_index():
     获取大盘指数行情
     return
     """
-    # df1 = pd.read_sql(all_stocks_table_name, engine)
-    # for scode in df1['code']:
-    #     # print(scode)
-    #     df = ts.get_h_data(scode, start='2018-01-01', end='2018-10-15', autype='hfq')
-    #     df.insert(0, 'ts_code', scode)
     df = ts.get_index()
-    # 写入数据库
     res = df.to_sql(table_index_stock, engine, if_exists='replace')
-    # 三元表达式
     msg = 'ok' if res is None else res
     print('写入大盘指数行情: ' + msg + '\n')
 
 
-def get_fq_data():
+def get_fq_data(start=None, end=None):
     dfs = pd.read_sql(table_stock_basic, engine)
     # 查询每只股票的上市日期
     for code in dfs['symbol']:
@@ -171,14 +167,12 @@ def get_fq_data():
         dh = ts.get_k_data(code, autype='qfq')  # 不复权或前复权
         # print('{0} {1}'.format('前复权数据: ', dh))
         res = dh.to_sql(qfq_k_data, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('write ' + code + ' 前复权K数据: ' + msg + '\n')
         dg = ts.get_k_data(code, autype='hfq')  # 后复权
         # print('{0} {1}'.format('后复权数据: ', dg))
         dg.rename(columns={'open': 'fopen', 'close': 'fclose', 'high': 'fhigh', 'low': 'flow'}, inplace=True)
         res = dg.to_sql(hfq_k_data, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('write ' + code + ' 后复权K数据: ' + msg + '\n')
         # sql = "select list_date from {1} where symbol = '{0}'".format(code, table_stock_basic)
@@ -220,9 +214,7 @@ def formatdate(date, format_type='YYYYMMDD'):
 def get_sme_info():
     # 中小板分类
     df = ts.get_sme_classified()
-    # 写入数据库
     res = df.to_sql(all_sme_table, engine, if_exists='replace')
-    # 三元表达式
     msg = 'ok' if res is None else res
     print('获取中小板分类: ' + msg + '\n')
     print(msg)
@@ -231,9 +223,7 @@ def get_sme_info():
 def get_gme_info():
     # 创业板分类
     df = ts.get_gem_classified()
-    # 写入数据库
     res = df.to_sql(all_gme_table, engine, if_exists='replace')
-    # 三元表达式
     msg = 'ok' if res is None else res
     print('获取创业板分类: ' + msg + '\n')
     print(msg)
@@ -242,84 +232,71 @@ def get_gme_info():
 def get_st_info():
     # 风险警示板分类
     df = ts.get_st_classified()
-    # 写入数据库
     res = df.to_sql(all_st_table, engine, if_exists='replace')
-    # 三元表达式
     msg = 'ok' if res is None else res
     print('获取风险警示板分类: ' + msg + '\n')
-    print(msg)
 
 
 def get_hs300_info():
     # 沪深300当前成份股及所占权重
     df = ts.get_hs300s()
-    # 写入数据库
     res = df.to_sql(all_hs300_table, engine, if_exists='replace')
-    # 三元表达式
     msg = 'ok' if res is None else res
     print('获取沪深300当前成份股及所占权重: ' + msg + '\n')
-    print(msg)
 
 
 def get_sz50s_info():
     # 上证50成份股
     df = ts.get_sz50s()
-    # 写入数据库
     res = df.to_sql(all_sz50_table, engine, if_exists='replace')
-    # 三元表达式
     msg = 'ok' if res is None else res
     print('获取上证50成份股: ' + msg + '\n')
-    print(msg)
 
 
 def get_zz500s_info():
     # 中证500成份股
     df = ts.get_zz500s()
-    print(df)
-    return
-    # 写入数据库
-    res = df.to_sql(all_zz500_table, engine, if_exists='replace')
-    # 三元表达式
-    msg = 'ok' if res is None else res
-    print('获取中证500成份股: ' + msg + '\n')
-    print(msg)
+    # print(df)
+    if df is not None:
+        res = df.to_sql(all_zz500_table, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取中证500成份股: ' + msg + '\n')
+    else:
+        print('获取中证500成份股: ' + 'None' + '\n')
 
 
 def get_terminated_info():
     # 已经被终止上市的股票列表
     df = ts.get_terminated()
-    # 写入数据库
-    res = df.to_sql(all_terminated_table, engine, if_exists='replace')
-    # 三元表达式
-    msg = 'ok' if res is None else res
-    print('获取已经被终止上市的股票列表: ' + msg + '\n')
-    print(msg)
+    if df is not None:
+        res = df.to_sql(all_terminated_table, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取已经被终止上市的股票列表: ' + msg + '\n')
+    else:
+        print('获取已经被终止上市的股票列表: ' + 'None' + '\n')
 
 
 def get_suspended_info():
     # 被暂停上市的股票列表
     df = ts.get_suspended()
     df
-    if df is None:
-        return
-    # 写入数据库
-    res = df.to_sql(all_suspended_table, engine, if_exists='replace')
-    # 三元表达式
-    msg = 'ok' if res is None else res
-    print('获取被暂停上市的股票列表: ' + msg + '\n')
-    print(msg)
+    if df is not None:
+        res = df.to_sql(all_suspended_table, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取被暂停上市的股票列表: ' + msg + '\n')
+    else:
+        print('获取被暂停上市的股票列表: ' + 'None' + '\n')
 
 
 def get_new_stock_info():
     df = ts.new_stocks()
     # print(df)
     if df is not None:
-        # 写入数据库
         res = df.to_sql(all_new_stock_table, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取新股数据: ' + msg + '\n')
-        print(msg)
+    else:
+        print('获取新股数据: ' + 'None' + '\n')
 
 
 def get_report_info(year, quarter):
@@ -334,11 +311,14 @@ def get_report_info(year, quarter):
     df = ts.get_report_data(year, quarter)
     print(df)
     if df is not None:
-        # 写入数据库
+        if len(df) > 0:
+            df.insert(0, 'year', year)
+            df.insert(1, 'quarter', quarter)
         res = df.to_sql(quarter_stock_report_table, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取业绩报表数据: {0} {1}: {2}'.format(year, quarter, msg) + '\n')
+    else:
+        print('获取业绩报表数据: ' + 'None' + '\n')
 
 
 def get_profit_info(year, quarter):
@@ -352,11 +332,14 @@ def get_profit_info(year, quarter):
     df = ts.get_profit_data(year, quarter)
     print(df)
     if df is not None:
-        # 写入数据库
+        if len(df) > 0:
+            df.insert(0, 'year', year)
+            df.insert(1, 'quarter', quarter)
         res = df.to_sql(quarter_stock_profit_table, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取盈利能力数据: {0} {1}: {2}'.format(year, quarter, msg) + '\n')
+    else:
+        print('获取盈利能力数据: {0} {1}: {2}'.format(year, quarter, 'None') + '\n')
 
 
 def get_operation_info(year, quarter):
@@ -371,11 +354,14 @@ def get_operation_info(year, quarter):
     df = ts.get_operation_data(year, quarter)
     print(df)
     if df is not None:
-        # 写入数据库
+        if len(df) > 0:
+            df.insert(0, 'year', year)
+            df.insert(1, 'quarter', quarter)
         res = df.to_sql(quarter_stock_operation_table, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取营运能力数据: {0} {1}: {2}'.format(year, quarter, msg) + '\n')
+    else:
+        print('获取营运能力数据: {0} {1}: {2}'.format(year, quarter, 'None') + '\n')
 
 
 def get_growth_info(year, quarter):
@@ -389,11 +375,14 @@ def get_growth_info(year, quarter):
     df = ts.get_growth_data(year, quarter)
     print(df)
     if df is not None:
-        # 写入数据库
+        if len(df) > 0:
+            df.insert(0, 'year', year)
+            df.insert(1, 'quarter', quarter)
         res = df.to_sql(quarter_stock_growth_table, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取成长能力数据: {0} {1}: {2}'.format(year, quarter, msg) + '\n')
+    else:
+        print('获取成长能力数据: {0} {1}: {2}'.format(year, quarter, 'None') + '\n')
 
 
 def get_debt_paying_info(year, quarter):
@@ -407,11 +396,14 @@ def get_debt_paying_info(year, quarter):
     df = ts.get_debtpaying_data(year, quarter)
     print(df)
     if df is not None:
-        # 写入数据库
+        if len(df) > 0:
+            df.insert(0, 'year', year)
+            df.insert(1, 'quarter', quarter)
         res = df.to_sql(quarter_stock_debt_paying_table, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取偿债能力数据: {0} {1}: {2}'.format(year, quarter, msg) + '\n')
+    else:
+        print('获取偿债能力数据: {0} {1}: {2}'.format(year, quarter, 'None') + '\n')
 
 
 def get_cash_flow_info(year, quarter):
@@ -425,11 +417,14 @@ def get_cash_flow_info(year, quarter):
     df = ts.get_cashflow_data(year, quarter)
     print(df)
     if df is not None:
-        # 写入数据库
+        if len(df) > 0:
+            df.insert(0, 'year', year)
+            df.insert(1, 'quarter', quarter)
         res = df.to_sql(quarter_stock_cash_flow_table, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取现金流量数据: {0} {1}: {2}'.format(year, quarter, msg) + '\n')
+    else:
+        print('获取现金流量数据: {0} {1}: {2}'.format(year, quarter, 'None') + '\n')
 
 
 def get_ref_profit(year, top):
@@ -442,11 +437,15 @@ def get_ref_profit(year, top):
     df = ts.profit_data(year, top)
     print(df)
     if df is not None:
-        # 写入数据库
+        if len(df) > 0:
+            if year is None:
+                year = 2014
+            df.insert(0, 'year', year)
         res = df.to_sql(invest_stock_ref_profit, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取股票的送转和分红预案数据: {0}: {1}'.format(year, msg) + '\n')
+    else:
+        print('获取股票的送转和分红预案数据: {0}: {1}'.format(year, 'None') + '\n')
 
 
 def get_ref_forecast_data(year, quarter):
@@ -458,14 +457,17 @@ def get_ref_forecast_data(year, quarter):
     df = ts.forecast_data(year, quarter)
     print(df)
     if df is not None:
-        # 写入数据库
+        if len(df) > 0:
+            df.insert(0, 'year', year)
+            df.insert(1, 'quarter', quarter)
         res = df.to_sql(invest_stock_ref_forecast, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取业绩预告数据: {0} {1}: {2}'.format(year, quarter, msg) + '\n')
+    else:
+        print('获取业绩预告数据: {0} {1}: {2}'.format(year, quarter, 'None') + '\n')
 
 
-def get_ref_xsg(year, month):
+def get_ref_xsg(year=None, month=None):
     """
     投资参考 系列
     以月的形式返回限售股解禁情况，通过了解解禁股本的大小，判断股票上行的压力。
@@ -474,11 +476,14 @@ def get_ref_xsg(year, month):
     df = ts.xsg_data(year, month)
     print(df)
     if df is not None:
-        # 写入数据库
+        if len(df) > 0:
+            df.insert(0, 'year', year)
+            df.insert(1, 'month', month)
         res = df.to_sql(invest_stock_ref_xsg, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取业绩预告数据: {0} {1}: {2}'.format(year, month, msg) + '\n')
+    else:
+        print('获取业绩预告数据: {0} {1}: {2}'.format(year, month, 'None') + '\n')
 
 
 def get_ref_fund_holdings(year, quarter):
@@ -489,43 +494,46 @@ def get_ref_fund_holdings(year, quarter):
     df = ts.fund_holdings(year, quarter)
     print(df)
     if df is not None:
-        # 写入数据库
+        if len(df) > 0:
+            df.insert(0, 'year', year)
+            df.insert(1, 'quarter', quarter)
         res = df.to_sql(invest_stock_ref_fund_holdings, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取每个季度基金持有上市公司股票数据: {0} {1}: {2}'.format(year, quarter, msg) + '\n')
+    else:
+        print('获取每个季度基金持有上市公司股票数据: {0} {1}: {2}'.format(year, quarter, 'None') + '\n')
 
 
-def get_sh_margins(start, end):
+def get_sh_margins(start=None, end=None):
     """
     投资参考 系列
     融资融券（沪市）:沪市融资融券汇总数据
     """
-    df = ts.sh_margins()
-    # df = ts.sh_margins(start, end)
+    df = ts.sh_margins(start, end)
     print(df)
     if df is not None:
-        # 写入数据库
         res = df.to_sql(invest_stock_ref_sh_margins, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取沪市融资融券汇总数据: 开始时间：{0} 结束时间：{1}: {2}'.format(start, end, msg) + '\n')
+    else:
+        print('获取沪市融资融券汇总数据: 开始时间：{0} 结束时间：{1}: {2}'.format(start, end, 'None') + '\n')
 
 
-def get_sh_margin_details(start, end, symbol):
+def get_sh_margin_details(date='', symbol='', start=''):
     """
     投资参考 系列
     融资融券（沪市）:沪市融资融券明细数据
     """
-    # df = ts.sh_margin_details(start, end, symbol)
-    df = ts.sh_margin_details()
+    df = ts.sh_margin_details(date, symbol, start)
     print(df)
     if df is not None:
-        # 写入数据库
         res = df.to_sql(invest_stock_ref_sh_margin_details, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
-        print('获取沪市融资融券明细数据: 开始时间：{0} 结束时间：{1}: {2}'.format(start, end, msg) + '\n')
+        print('获取沪市融资融券明细数据 {0}: 开始时间：{1} 结束时间：{2} 股票代码: {3}'.
+              format(msg, start, date, symbol) + '\n')
+    else:
+        print('获取沪市融资融券明细数据 {0}: 开始时间：{1} 结束时间：{2} 股票代码: {3}'.
+              format('None', start, date, symbol) + '\n')
 
 
 def get_sz_margins(start, end):
@@ -536,11 +544,25 @@ def get_sz_margins(start, end):
     df = ts.sz_margins(start, end)
     print(df)
     if df is not None:
-        # 写入数据库
+        if start is None:
+            start = get_week_today()
+        if end is None:
+            start = datetime.date.today()
+        if len(df) > 0:
+            df.insert(0, 'start', start)
+            df.insert(1, 'end', end)
         res = df.to_sql(invest_stock_ref_sz_margins, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取沪市融资融券汇总数据: 开始时间：{0} 结束时间：{1}: {2}'.format(start, end, msg) + '\n')
+    else:
+        print('获取沪市融资融券汇总数据: 开始时间：{0} 结束时间：{1}: {2}'.format(start, end, 'None') + '\n')
+
+
+def get_week_today():
+    today = datetime.date.today()  # 今天
+    # yesterday = today - datetime.timedelta(days=1)  # 昨天
+    week_today = today + datetime.timedelta(days=7)  # 明天
+    return week_today
 
 
 def get_sz_margin_details(start):
@@ -551,11 +573,15 @@ def get_sz_margin_details(start):
     df = ts.sz_margin_details(start)
     print(df)
     if df is not None:
-        # 写入数据库
+        if start is None:
+            start = datetime.date.today()
+        if len(df) > 0:
+            df.insert(0, 'start', start)
         res = df.to_sql(invest_stock_ref_sz_margin_details, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取沪市融资融券明细数据: 开始时间：{0}  {1}'.format(start, msg) + '\n')
+    else:
+        print('获取沪市融资融券明细数据: 开始时间：{0}  {1}'.format(start, 'None') + '\n')
 
 
 def get_lbh_top_list(data):
@@ -566,11 +592,11 @@ def get_lbh_top_list(data):
     df = ts.top_list(data)
     print(df)
     if df is not None:
-        # 写入数据库
         res = df.to_sql(lbh_top_list, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取历史当日上榜的个股数据: 开始时间：{0}  {1}'.format(data, msg) + '\n')
+    else:
+        print('获取历史当日上榜的个股数据: 开始时间：{0}  {1}'.format(data, 'None') + '\n')
 
 
 def get_lbh_inst_detail():
@@ -581,11 +607,11 @@ def get_lbh_inst_detail():
     df = ts.inst_detail()
     print(df)
     if df is not None:
-        # 写入数据库
         res = df.to_sql(lbh_inst_detail, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取最近一个交易日机构席位成交明细统计数据：{0}'.format(msg) + '\n')
+    else:
+        print('获取最近一个交易日机构席位成交明细统计数据：{0}'.format('None') + '\n')
 
 
 def get_lbh_inst_tops(day):
@@ -596,11 +622,11 @@ def get_lbh_inst_tops(day):
     df = ts.inst_tops(day)
     print(df)
     if df is not None:
-        # 写入数据库
         res = df.to_sql(lbh_inst_tops, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取机构近 {0} 日累积买卖次数和金额等情况：{1}'.format(day, msg) + '\n')
+    else:
+        print('获取机构近 {0} 日累积买卖次数和金额等情况：{1}'.format(day, 'None') + '\n')
 
 
 def get_lbh_broker_tops(day):
@@ -611,11 +637,11 @@ def get_lbh_broker_tops(day):
     df = ts.broker_tops(day)
     print(df)
     if df is not None:
-        # 写入数据库
         res = df.to_sql(lbh_broker_tops, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取营业部近 {0} 日上榜次数、累积买卖等情况：{1}'.format(day, msg) + '\n')
+    else:
+        print('获取营业部近 {0} 日上榜次数、累积买卖等情况：{1}'.format(day, 'None') + '\n')
 
 
 def get_lbh_cap_tops(day):
@@ -627,229 +653,313 @@ def get_lbh_cap_tops(day):
     df = ts.cap_tops(day)
     print(df)
     if df is not None:
-        # 写入数据库
         res = df.to_sql(lbh_cap_tops, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取近 {0} 日个股上榜统计数据,包括上榜次数、累积购买额、累积卖出额、净额、'
               '买入席位数和卖出席位数：{1}'.format(day, msg) + '\n')
+    else:
+        print('获取近 {0} 日个股上榜统计数据,包括上榜次数、累积购买额、累积卖出额、净额、'
+              '买入席位数和卖出席位数：{1}'.format(day, 'None') + '\n')
 
 
-def get_shibor_data(year):
+def get_shibor_data(year=None):
     """
     Shibor拆放利率
     获取银行间同业拆放利率数据，目前只提供2006年以来的数据。
     """
-    df = ts.shibor_data()
-    # df = ts.shibor_data(year)
+    df = ts.shibor_data(year)
     print(df)
     if df is not None:
-        # 写入数据库
         res = df.to_sql(shibor_data, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
-        print('获取银行间同业拆放利率数据: 年：{0}  {1}'.format(year, msg) + '\n')
+        print('获取银行间同业拆放利率数据: 年份 {0}  {1}'.format(year, msg) + '\n')
+    else:
+        print('获取银行间同业拆放利率数据: 年份 {0}  {1}'.format(year, 'None') + '\n')
 
 
-def get_shibor_quote_data(year):
+def get_shibor_quote_data(year=None):
     """
     银行报价数据
     获取银行间报价数据，目前只提供2006年以来的数据。
     """
-    df = ts.shibor_quote_data()
-    # df = ts.shibor_quote_data(year)
-    print(df)
+    df = ts.shibor_quote_data(year)
+    # print(df)
     if df is not None:
-        # 写入数据库
         res = df.to_sql(shibor_quote_data, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
-        print('获取银行间报价数据: 年：{0}  {1}'.format(year, msg) + '\n')
+        print('获取银行间报价数据: 年份 {0}  {1}'.format(year, msg) + '\n')
+    else:
+        print('获取银行间报价数据: 年份 {0}  {1}'.format(year, 'None') + '\n')
 
 
-def get_shibor_ma_data(year):
+def get_shibor_ma_data(year=None):
     """
     获取Shibor均值数据，目前只提供2006年以来的数据。
     """
-    df = ts.shibor_ma_data()
-    # df = ts.shibor_ma_data(year)
+    df = ts.shibor_ma_data(year)
     print(df)
     if df is not None:
-        # 写入数据库
+        if year is None:
+            year = datetime.now().year
+        df.insert(0, 'year', year)
         res = df.to_sql(shibor_ma_data, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取Shibor均值数据: 年：{0}  {1}'.format(year, msg) + '\n')
+    else:
+        print('获取Shibor均值数据: 年：{0}  {1}'.format(year, 'None') + '\n')
 
 
-def get_shibor_lpr_data(year):
+def get_shibor_lpr_data(year=None):
     """
     贷款基础利率（LPR）
     获取贷款基础利率（LPR）数据，目前只提供2013年以来的数据。
     """
-    df = ts.lpr_data()
-    # df = ts.lpr_data(year)
+    df = ts.lpr_data(year)
     print(df)
     if df is not None:
-        # 写入数据库
         res = df.to_sql(shibor_lpr_data, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取贷款基础利率（LPR）数据: 年：{0}  {1}'.format(year, msg) + '\n')
+    else:
+        print('获取贷款基础利率（LPR）数据: 年：{0}  {1}'.format(year, 'None') + '\n')
 
 
-def get_shibor_lpr_ma_data(year):
+def get_shibor_lpr_ma_data(year=None):
     """
     LPR均值数据
     获取贷款基础利率均值数据，目前只提供2013年以来的数据。
     """
-    df = ts.lpr_data()
-    # df = ts.lpr_data(year)
+    df = ts.lpr_data(year)
     print(df)
     if df is not None:
-        # 写入数据库
         res = df.to_sql(shibor_lpr_ma_data, engine, if_exists='replace')
-        # 三元表达式
         msg = 'ok' if res is None else res
         print('获取贷款基础利率均值数据: 年：{0}  {1}'.format(year, msg) + '\n')
+    else:
+        print('获取贷款基础利率均值数据: 年：{0}  {1}'.format(year, 'None') + '\n')
 
 
 def get_deposit_rate_info():
     # 存款利率
     df = ts.get_deposit_rate()
-    # 写入数据库
-    res = df.to_sql(microE_deposit_rate, engine, if_exists='replace')
-    # 三元表达式
-    msg = 'ok' if res is None else res
-    print('获取存款利率: ' + msg + '\n')
+    if df is not None:
+        res = df.to_sql(microE_deposit_rate, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取存款利率: ' + msg + '\n')
+    else:
+        print('获取存款利率: ' + 'None' + '\n')
 
 
 def get_loan_rate_info():
     # 贷款利率
     df = ts.get_loan_rate()
-    # 写入数据库
-    res = df.to_sql(microE_loan_rate, engine, if_exists='replace')
-    # 三元表达式
-    msg = 'ok' if res is None else res
-    print('获取贷款利率: ' + msg + '\n')
+    if df is not None:
+        res = df.to_sql(microE_loan_rate, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取贷款利率: ' + msg + '\n')
+    else:
+        print('获取贷款利率: ' + 'None' + '\n')
 
 
 def get_rrr_info():
     df = ts.get_rrr()
-    # 写入数据库
-    res = df.to_sql(microE_rrr, engine, if_exists='replace')
-    # 三元表达式
-    msg = 'ok' if res is None else res
-    print('获取存款准备金率: ' + msg + '\n')
+    if df is not None:
+        res = df.to_sql(microE_rrr, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取存款准备金率: ' + msg + '\n')
+    else:
+        print('获取存款准备金率: ' + 'None' + '\n')
 
 
 def get_money_supply_info():
     df = ts.get_money_supply()
-    # 写入数据库
-    res = df.to_sql(microE_money_supply, engine, if_exists='replace')
-    # 三元表达式
-    msg = 'ok' if res is None else res
-    print('获取货币供应量: ' + msg + '\n')
+    if df is not None:
+        res = df.to_sql(microE_money_supply, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取货币供应量: ' + msg + '\n')
+    else:
+        print('获取货币供应量: ' + 'None' + '\n')
 
 
 def get_money_supply_bal_info():
     df = ts.get_money_supply_bal()
-    # 写入数据库
-    res = df.to_sql(microE_money_supply_bal, engine, if_exists='replace')
-    # 三元表达式
-    msg = 'ok' if res is None else res
-    print('获取货币供应量(年底余额): ' + msg + '\n')
+    if df is not None:
+        res = df.to_sql(microE_money_supply_bal, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取货币供应量(年底余额): ' + msg + '\n')
+    else:
+        print('获取货币供应量(年底余额): ' + 'None' + '\n')
 
 
 def get_gdp_year_info():
     df = ts.get_gdp_year()
-    # 写入数据库
-    res = df.to_sql(microE_gdp_year, engine, if_exists='replace')
-    # 三元表达式
-    msg = 'ok' if res is None else res
-    print('获取国内生产总值(年度): ' + msg + '\n')
+    if df is not None:
+        res = df.to_sql(microE_gdp_year, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取国内生产总值(年度): ' + msg + '\n')
+    else:
+        print('获取国内生产总值(年度): ' + 'None' + '\n')
 
 
 def get_gdp_quarter_info():
     df = ts.get_gdp_quarter()
-    # 写入数据库
-    res = df.to_sql(microE_gdp_quarter, engine, if_exists='replace')
-    # 三元表达式
-    msg = 'ok' if res is None else res
-    print('获取国内生产总值(季度): ' + msg + '\n')
+    if df is not None:
+        res = df.to_sql(microE_gdp_quarter, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取国内生产总值(季度): ' + msg + '\n')
+    else:
+        print('获取国内生产总值(季度): ' + 'None' + '\n')
 
 
 def get_gdp_for_info():
     df = ts.get_gdp_for()
-    # 写入数据库
-    res = df.to_sql(microE_gdp_for, engine, if_exists='replace')
-    # 三元表达式
-    msg = 'ok' if res is None else res
-    print('获取三大需求对GDP贡献: ' + msg + '\n')
+    if df is not None:
+        res = df.to_sql(microE_gdp_for, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取三大需求对GDP贡献: ' + msg + '\n')
+    else:
+        print('获取三大需求对GDP贡献: ' + 'None' + '\n')
 
 
 def get_gdp_pull_info():
     df = ts.get_gdp_pull()
-    res = df.to_sql(microE_gdp_pull, engine, if_exists='replace')
-    msg = 'ok' if res is None else res
-    print('获取三大产业对GDP拉动: ' + msg + '\n')
+    if df is not None:
+        res = df.to_sql(microE_gdp_pull, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取三大产业对GDP拉动: ' + msg + '\n')
+    else:
+        print('获取三大产业对GDP拉动: ' + 'None' + '\n')
 
 
 def get_gdp_contrib_info():
     df = ts.get_gdp_contrib()
-    res = df.to_sql(microE_gdp_contrib, engine, if_exists='replace')
-    msg = 'ok' if res is None else res
-    print('获取三大产业贡献率: ' + msg + '\n')
+    if df is not None:
+        res = df.to_sql(microE_gdp_contrib, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取三大产业贡献率: ' + msg + '\n')
+    else:
+        print('获取三大产业贡献率: ' + 'None' + '\n')
 
 
 def get_gdp_cpi_info():
     df = ts.get_cpi()
-    res = df.to_sql(microE_cpi, engine, if_exists='replace')
-    msg = 'ok' if res is None else res
-    print('获取居民消费价格指数: ' + msg + '\n')
+    if df is not None:
+        res = df.to_sql(microE_cpi, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取居民消费价格指数: ' + msg + '\n')
+    else:
+        print('获取居民消费价格指数: ' + 'None' + '\n')
 
 
 def get_gdp_ppi_info():
     df = ts.get_ppi()
-    res = df.to_sql(microE_ppi, engine, if_exists='replace')
-    msg = 'ok' if res is None else res
-    print('获取工业品出厂价格指数: ' + msg + '\n')
+    if df is not None:
+        res = df.to_sql(microE_ppi, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取工业品出厂价格指数: ' + msg + '\n')
+    else:
+        print('获取工业品出厂价格指数: ' + 'None' + '\n')
 
 
 def get_realtime_boxoffice():
     df = ts.realtime_boxoffice()
-    res = df.to_sql(fun_realtime_box_office, engine, if_exists='replace')
-    msg = 'ok' if res is None else res
-    print('获取获取实时电影票房数据: ' + msg + '\n')
+    if df is not None:
+        res = df.to_sql(fun_realtime_box_office, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取获取实时电影票房数据: ' + msg + '\n')
+    else:
+        print('获取获取实时电影票房数据: ' + 'None' + '\n')
 
 
 def get_day_boxoffice(date=None):
     df = ts.day_boxoffice(date)
-    res = df.to_sql(fun_day_box_office, engine, if_exists='replace')
-    msg = 'ok' if res is None else res
-    print('获取日期:{0} 电影票房数据:  {1} '.format(date, msg) + '\n')
+    if df is not None:
+        if date is None:
+            date = get_yesterday()
+        df.insert(0, 'date', date)
+        res = df.to_sql(fun_day_box_office, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取指定单日:{0} 电影票房数据:  {1} '.format(date, msg) + '\n')
+    else:
+        print('获取指定单日:{0} 电影票房数据:  {1} '.format(date, 'None') + '\n')
 
 
 def get_month_boxoffice(date=None):
     df = ts.month_boxoffice(date)
-    res = df.to_sql(fun_month_box_office, engine, if_exists='replace')
-    msg = 'ok' if res is None else res
-    print('获取单月份：{0} 电影票房数据: {1} '.format(date, msg) + '\n')
+    if df is not None:
+        if date is None:
+            date = get_last_month()
+        df.insert(0, 'date', date)
+        res = df.to_sql(fun_month_box_office, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取单月份：{0} 电影票房数据: {1} '.format(date, msg) + '\n')
+    else:
+        print('获取单月份：{0} 电影票房数据: {1} '.format(date, 'None') + '\n')
 
 
 def get_day_cinema(day=None):
     df = ts.day_cinema(day)
-    res = df.to_sql(fun_day_cinema, engine, if_exists='replace')
-    msg = 'ok' if res is None else res
-    print('获取全国影院单日：{0}票房排行数据: {1} '.format(day, msg) + '\n')
+    if df is not None:
+        if day is None:
+            day = get_yesterday()
+        df.insert(0, 'date', day)
+        res = df.to_sql(fun_day_cinema, engine, if_exists='replace')
+        msg = 'ok' if res is None else res
+        print('获取全国影院指定单日：{0}票房排行数据: {1} '.format(day, msg) + '\n')
+    else:
+        print('获取全国影院指定单日：{0}票房排行数据: {1} '.format(day, 'None') + '\n')
+
+
+def get_today():
+    t = date.today()  # date类型
+    dt = datetime.strptime(str(t), '%Y-%m-%d')  # date转str再转datetime
+    return dt
+
+
+def get_yesterday():
+        today = get_today()  # datetime类型当前日期
+        yesterday = today + timedelta(-1)  # 减去一天
+        return yesterday
+
+
+def get_last_month():
+    now = datetime.now()
+    # this_month = datetime.now().strftime('%Y-%m')
+    this_month_start = datetime(now.year, now.month, 1)
+    last_month_end = this_month_start - timedelta(days=1)
+    last_month = last_month_end.strftime('%Y-%m')
+    # print(last_month)
+    return last_month
+
+
+def get_last_year_today():
+    day = datetime.now().day  # 获取当天日期
+    year = datetime.now().year
+    month = datetime.now().month
+    st = '{0}-{1}-{2}'.format(year-1, month, day)
+    return st
+
+
+def create_dataframe():
+   d3 = pd.DataFrame({'code':['0', 1111]})
+   for item in d3['code']:
+       print(item)
 
 
 if __name__ == "__main__":
+    print('testing start---')
+    # create_dataframe()
+    # get_today()
+    # get_last_year_today()
+    # get_last_month()
     # 娱乐
-    get_realtime_boxoffice()
-    get_day_boxoffice()
-    get_month_boxoffice('2018-08')
-    get_day_cinema()
+    # get_realtime_boxoffice()
+    # get_day_boxoffice('2018-10-01')
+    # get_day_boxoffice()
+    # get_month_boxoffice('2018-08')
+    # get_month_boxoffice()
+    # get_day_cinema('2018-10-01')
+    # get_day_cinema()
     # 娱乐
     # 宏观经济
     # get_deposit_rate_info()
@@ -864,12 +974,13 @@ if __name__ == "__main__":
     # get_gdp_ppi_info()
     # get_gdp_pull_info()
     # get_gdp_for_info()
+    # get_money_supply_bal_info()
     # 宏观经济
-    # get_shibor_data(2016)
-    # get_shibor_quote_data(2017)
-    # get_shibor_ma_data(2008)
+    # for year in [2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018]:
+    #     # get_shibor_data(year)
+    #     get_shibor_quote_data(year)
+    get_shibor_ma_data(2008)
     # get_shibor_lpr_ma_data(2017)
-
     # get_lbh_top_list('2018-08-01')
     # get_lbh_inst_detail()
     # get_lbh_inst_tops(60)
@@ -899,12 +1010,15 @@ if __name__ == "__main__":
     # get_ref_xsg(2018, 9)
     # get_ref_fund_holdings(2014, 3)
     # HTTP Error 403: Forbidden
-    # get_sh_margins(start='2018-01-01', end='2018-09-30')
-    # get_sh_margin_details(start='2018-08-01', end='2018-10-16', symbol='601989')
+    # get_sh_margins()
+    # get_sh_margin_details(symbol='601989')
     #  HTTP Error 403: Forbidden
 
     # get_sz_margins(start='2018-08-01', end='2018-09-30')
     # get_sz_margin_details('2018-08-01')
-
+    # get_h_info()
+    # get_hfq_info()
     # get_fq_data()
+    print('testing end---')
+
 
