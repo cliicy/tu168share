@@ -11,7 +11,8 @@ class CrawlTuItem(Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
     # pass
-    # h_index = Field()
+    # head = Field()
+    content = Field()
     # data = Field()
     # code = Field()
     # name = Field()
@@ -26,4 +27,4 @@ class CrawlTuItem(Item):
     # low = Field()
     # num = Field()
     # url = Field()
-    content = Field()
+
