@@ -9,7 +9,7 @@ from scrapy import Item, Field
 
 class CrawlTuItem(Item):
     # define the fields for your item here like:
-    # name = scrapy.Field()
+    xg = Field()
     # pass
     # head = Field()
     content = Field()

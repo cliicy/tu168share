@@ -66,17 +66,19 @@ ROBOTSTXT_OBEY = True
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
    'crawl_tu.pipelines.CrawlTuPipeline': 300,
+   # 'crawl_tu.pipelines.TCrawlTuPipeline': 300,
 }
-arr = {
+emongodb = {
     "host": '172.24.132.208',
-    "user": 'pig',
-    "password": 'pig123',
-    "db": 'tushare',
-    "port": 3306,
-    "charset": 'utf8'
+    "user": 'data',
+    "password": 'data123',
+    "db": 'invest',
+    "port": '27017',
+    "gg": 'east_fund_personal',  # 个股研报 document
+    "hy": 'east_fund_hangye',  # 行业研报 document
+    "xg": 'east_fund_xingu',  # 新股研报 document
+    "pf": 'east_fund_profit_forecast'  # 个股盈利预测 document
 }
-url = f"mysql://{arr['user']}:{arr['password']}@{arr['host']}"f":{arr['port']}/{arr['db']}?charset={arr['charset']}"
-
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html

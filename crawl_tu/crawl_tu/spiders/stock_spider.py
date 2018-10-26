@@ -1,7 +1,7 @@
 import scrapy
-import pandas as pd
 from crawl_tu.items import CrawlTuItem
-
+import timeit
+from datetime import datetime
 ylist = ['2018预测', '2019预测']
 
 
@@ -41,8 +41,8 @@ class EastMoneySpider(scrapy.Spider):
     def grap_stock_data(self, response):
         a_space = response.xpath('//div[@class="content tb14"]/table[@class="t1"]/thead[@class="h432"]/'
                                  'following-sibling::tbody')
-        sa_space = a_space.xpath('/following-sibling::text()')
-        # print(a_space)
+        sa_space = a_space.xpath('/following-sibling::text()')  # //*[@id="dt_1"]/tbody/tr[1]/td[7]
+        print(a_space)
         print(sa_space)
         # a_each = a_space.xpath('//*')
         # print(a_each)
@@ -69,26 +69,35 @@ class EastMoneySpider(scrapy.Spider):
         pass
 
     def start_requests(self):
-        urls = []
-
-        prefix1 = 'http://data.eastmoney.com/report/'
-        # prefix1 = 'http://data.eastmoney.com/report/#dHA9MCZjZz0wJmR0PTImcGFnZT0x'
-        # for x in range(1, 200):
-        #     p = str(x)
-        #     urls.append('{0}{1}'.format(prefix, 'ps=50&p=''"+p+"&mkt=0&stat=0&cmd=4&code=&rt=51330470'))
-        urls.append(prefix1)
+        urls = ['http://data.eastmoney.com/report/xg.html']
         for url in urls:
             yield scrapy.Request(url=url, headers=self.headers, callback=self.parse)
 
     def parse(self, response):
         item = CrawlTuItem()
-        # item['head'] = self.grab_head(response)
-        # self.grap_stock_data(response)
-        self.grap_next_page(response)
+        item['head'] = self.grab_head(response)
+        self.grap_stock_data(response)
+        # self.grap_next_page(response)
         yield item
 
 
 if __name__ == '__main__':
+    # pass
+    # start = timeit.default_timer()
+    # print('aaaa')
+    # end = timeit.default_timer()
+    # print(str(end - start))
+    # start = datetime.now()
+    # for i in range(10):
+    #     print('aaa')
+    # end = datetime.now()
+    # spend = end - start
+    # print('消耗时间: ', spend)
+
+    # start = time.clock()
+    # print('aaa')
+    # elapsed = (time.clock() - start)
+    # print("Time used:", elapsed)
     pass
     # url = 'http://stock.eastmoney.com/report.html'
     # filename = url.split('/')[-1]
