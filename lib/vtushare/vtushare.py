@@ -1,5 +1,5 @@
 #coding=utf-8
-
+import os
 import sys
 import lib.vtushare.tushare.stock_basic as stock_bs
 
@@ -117,7 +117,6 @@ class Tushare(object):
         stock_bs.get_sz_margin_details('2018-08-01')
 
         stock_bs.get_fq_data()
-
 
 
 
