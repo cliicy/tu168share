@@ -77,7 +77,13 @@ emongodb = {
     "gg": 'east_fund_personal',  # 个股研报 document
     "hy": 'east_fund_hangye',  # 行业研报 document
     "xg": 'east_fund_xingu',  # 新股研报 document
-    "pf": 'east_fund_profit_forecast'  # 个股盈利预测 document
+    "pf": 'east_fund_profit_forecast',  # 个股盈利预测 document
+    "tmf": 'today_hangye_money_flow',  # 今日行业资金流向 document
+    "5mf": '5day_hangye_money_flow',  # 5日行业资金流向 document
+    "10mf": '10day_hangye_money_flow',  # 10日行业资金流向 document
+    "tkmf": 'today_kailian_money_flow',  # 今日概念板块资金流向 document
+    "5tkmf": '5days_kailian_money_flow',  # 5日概念板块资金流向 document
+    "10tkmf": '10days_kailian_money_flow'  # 10日概念板块资金流向 document
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

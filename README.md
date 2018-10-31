@@ -38,3 +38,8 @@ https://tushare.pro/document/1?doc_id=40 调取PRO版数据
 http://stock.eastmoney.com/report.html
 
 # TO BE CONTINUED
+
+
+运行命令行：
+pushd f:\Projects\vTrade\vtushare\crawl_tu\crawl_tu\spiders
+scrapy crawl today_money_flow > today_money_flow.txt

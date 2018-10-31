@@ -17,6 +17,16 @@ conn = MongoClient(mongo_url)
 sdb = conn[mdb["db"]]
 
 
+def changeWan2Yi(num):
+    tnum = num * 0.0001
+    if abs(tnum) >= 1:
+        tnum = round(tnum, 2)
+        return '{0}{1}'.format(tnum, '亿')
+    else:
+        num = round(num)
+        return '{0}{1}'.format(num, '万')
+
+
 class CrawlTuPipeline(object):
     def process_item(self, item, spider):
         if spider.name == 'gg_yanbao':
@@ -148,6 +158,228 @@ class CrawlTuPipeline(object):
                         ybdd[sp] = sdata[pos+1]
                         pos += 2
                     pf_coll.update({'代码': ybdd['代码'], '名称': ybdd['名称']}, {'$set': ybdd}, True)
+        elif spider.name == 'today_hangye_money_flow':
+            body = item['content']
+            body = (body.decode('utf-8')).replace("var AKACTekX=", "")
+            print('内容===== ', body)
+            if isinstance(body, list):
+                print('body 类型===== ', '列表')
+            if isinstance(body, dict):
+                print('body 类型===== ', '字典')
+            if isinstance(body, str):
+                print('body 类型===== ', '字符串')
+                pages, rdata = body.split(',', 1)
+                rdata = rdata[:-1]
+                list_data = eval(rdata.split(':', 1)[1])
+                print('获取到的数据：  ', list_data)
+                for item in list_data:
+                    ybdd = {}
+                    sdata = item.split(',')
+                    ybdd['名称'] = sdata[2]
+                    ybdd['今日涨跌幅'] = sdata[3]+'%'
+                    ybdd['今日主力净流入-净额'] = changeWan2Yi(float(sdata[4]))
+                    ybdd['今日主力净流入-净占比'] = sdata[5]+'%'
+
+                    ybdd['今日超大单净流入-净额'] = changeWan2Yi(float(sdata[6]))
+                    ybdd['今日超大单净流入-净占比'] = sdata[7]+'%'
+
+                    ybdd['今日大单净流入-净额'] = changeWan2Yi(float(sdata[8]))
+                    ybdd['今日大单净流入-净占比'] = sdata[9]+'%'
+
+                    ybdd['今日中单净流入-净额'] = changeWan2Yi(float(sdata[10]))
+                    ybdd['今日中单净流入-净占比'] = sdata[11]+'%'
+
+                    ybdd['今日小单净流入-净额'] = changeWan2Yi(float(sdata[12]))
+                    ybdd['今日小单净流入-净占比'] = sdata[13]+'%'
+
+                    ybdd['今日主力净流入-最大股'] = sdata[14]
+                    tmf_coll = sdb[mdb["tmf"]]
+                    tmf_coll.update({'名称': ybdd['名称']}, {'$set': ybdd}, True)
+        elif spider.name == '5day_hangye_money_flow':
+            body = item['content']
+            body = (body.decode('utf-8')).replace("var zWpcawma=", "")
+            print('内容===== ', body)
+            if isinstance(body, list):
+                print('body 类型===== ', '列表')
+            if isinstance(body, dict):
+                print('body 类型===== ', '字典')
+            if isinstance(body, str):
+                print('body 类型===== ', '字符串')
+                pages, rdata = body.split(',', 1)
+                rdata = rdata[:-1]
+                list_data = eval(rdata.split(':', 1)[1])
+                print('获取到的数据：  ', list_data)
+                for item in list_data:
+                    ybdd = {}
+                    sdata = item.split(',')
+                    ybdd['名称'] = sdata[2]
+                    ybdd['5日涨跌幅'] = sdata[3]+'%'
+                    ybdd['5日主力净流入-净额'] = changeWan2Yi(float(sdata[4]))
+                    ybdd['5日主力净流入-净占比'] = sdata[5]+'%'
+
+                    ybdd['5日超大单净流入-净额'] = changeWan2Yi(float(sdata[6]))
+                    ybdd['5日超大单净流入-净占比'] = sdata[7]+'%'
+
+                    ybdd['5日大单净流入-净额'] = changeWan2Yi(float(sdata[8]))
+                    ybdd['5日大单净流入-净占比'] = sdata[9]+'%'
+
+                    ybdd['5日中单净流入-净额'] = changeWan2Yi(float(sdata[10]))
+                    ybdd['5日中单净流入-净占比'] = sdata[11]+'%'
+
+                    ybdd['5日小单净流入-净额'] = changeWan2Yi(float(sdata[12]))
+                    ybdd['5日小单净流入-净占比'] = sdata[13]+'%'
+
+                    ybdd['5日主力净流入-最大股'] = sdata[14]
+                    mf5_coll = sdb[mdb["5mf"]]
+                    mf5_coll.update({'名称': ybdd['名称']}, {'$set': ybdd}, True)
+        elif spider.name == '10day_hangye_money_flow':
+            body = item['content']
+            body = (body.decode('utf-8')).replace("var NmXFNoAK=", "")
+            print('内容===== ', body)
+            if isinstance(body, list):
+                print('body 类型===== ', '列表')
+            if isinstance(body, dict):
+                print('body 类型===== ', '字典')
+            if isinstance(body, str):
+                print('body 类型===== ', '字符串')
+                pages, rdata = body.split(',', 1)
+                rdata = rdata[:-1]
+                list_data = eval(rdata.split(':', 1)[1])
+                print('获取到的数据：  ', list_data)
+                for item in list_data:
+                    ybdd = {}
+                    sdata = item.split(',')
+                    ybdd['名称'] = sdata[2]
+                    ybdd['10日涨跌幅'] = sdata[3]+'%'
+                    ybdd['10日主力净流入-净额'] = changeWan2Yi(float(sdata[4]))
+                    ybdd['10日主力净流入-净占比'] = sdata[5]+'%'
+
+                    ybdd['10日超大单净流入-净额'] = changeWan2Yi(float(sdata[6]))
+                    ybdd['10日超大单净流入-净占比'] = sdata[7]+'%'
+
+                    ybdd['10日大单净流入-净额'] = changeWan2Yi(float(sdata[8]))
+                    ybdd['10日大单净流入-净占比'] = sdata[9]+'%'
+
+                    ybdd['10日中单净流入-净额'] = changeWan2Yi(float(sdata[10]))
+                    ybdd['10日中单净流入-净占比'] = sdata[11]+'%'
+
+                    ybdd['10日小单净流入-净额'] = changeWan2Yi(float(sdata[12]))
+                    ybdd['10日小单净流入-净占比'] = sdata[13]+'%'
+
+                    ybdd['10日主力净流入-最大股'] = sdata[14]
+                    mf10_coll = sdb[mdb["10mf"]]
+                    mf10_coll.update({'名称': ybdd['名称']}, {'$set': ybdd}, True)
+        elif spider.name == 'today_kailian_money_flow':
+            body = item['content']
+            body = (body.decode('utf-8')).replace("var OSLDjtXS=", "")
+            print('内容===== ', body)
+            if isinstance(body, list):
+                print('body 类型===== ', '列表')
+            if isinstance(body, dict):
+                print('body 类型===== ', '字典')
+            if isinstance(body, str):
+                print('body 类型===== ', '字符串')
+                pages, rdata = body.split(',', 1)
+                rdata = rdata[:-1]
+                list_data = eval(rdata.split(':', 1)[1])
+                print('获取到的数据：  ', list_data)
+                for item in list_data:
+                    ybdd = {}
+                    sdata = item.split(',')
+                    ybdd['名称'] = sdata[2]
+                    ybdd['今日涨跌幅'] = sdata[3]+'%'
+                    ybdd['今日主力净流入-净额'] = changeWan2Yi(float(sdata[4]))
+                    ybdd['今日主力净流入-净占比'] = sdata[5]+'%'
+
+                    ybdd['今日超大单净流入-净额'] = changeWan2Yi(float(sdata[6]))
+                    ybdd['今日超大单净流入-净占比'] = sdata[7]+'%'
+
+                    ybdd['今日大单净流入-净额'] = changeWan2Yi(float(sdata[8]))
+                    ybdd['今日大单净流入-净占比'] = sdata[9]+'%'
+
+                    ybdd['今日中单净流入-净额'] = changeWan2Yi(float(sdata[10]))
+                    ybdd['今日中单净流入-净占比'] = sdata[11]+'%'
+
+                    ybdd['今日小单净流入-净额'] = changeWan2Yi(float(sdata[12]))
+                    ybdd['今日小单净流入-净占比'] = sdata[13]+'%'
+
+                    ybdd['今日主力净流入-最大股'] = sdata[14]
+                    tkmf_coll = sdb[mdb["tkmf"]]
+                    tkmf_coll.update({'名称': ybdd['名称']}, {'$set': ybdd}, True)
+        elif spider.name == '5days_kailian_money_flow':
+            body = item['content']
+            body = (body.decode('utf-8')).replace("var kKrfEPzl=", "")
+            # print('内容===== ', body)
+            if isinstance(body, list):
+                print('body 类型===== ', '列表')
+            if isinstance(body, dict):
+                print('body 类型===== ', '字典')
+            if isinstance(body, str):
+                print('body 类型===== ', '字符串')
+                pages, rdata = body.split(',', 1)
+                rdata = rdata[:-1]
+                list_data = eval(rdata.split(':', 1)[1])
+                print('获取到的数据：  ', list_data)
+                for item in list_data:
+                    ybdd = {}
+                    sdata = item.split(',')
+                    ybdd['名称'] = sdata[2]
+                    ybdd['5日涨跌幅'] = sdata[3]+'%'
+                    ybdd['5日主力净流入-净额'] = changeWan2Yi(float(sdata[4]))
+                    ybdd['5日主力净流入-净占比'] = sdata[5]+'%'
+
+                    ybdd['5日超大单净流入-净额'] = changeWan2Yi(float(sdata[6]))
+                    ybdd['5日超大单净流入-净占比'] = sdata[7]+'%'
+
+                    ybdd['5日大单净流入-净额'] = changeWan2Yi(float(sdata[8]))
+                    ybdd['5日大单净流入-净占比'] = sdata[9]+'%'
+
+                    ybdd['5日中单净流入-净额'] = changeWan2Yi(float(sdata[10]))
+                    ybdd['5日中单净流入-净占比'] = sdata[11]+'%'
+
+                    ybdd['5日小单净流入-净额'] = changeWan2Yi(float(sdata[12]))
+                    ybdd['5日小单净流入-净占比'] = sdata[13]+'%'
+
+                    ybdd['5日主力净流入-最大股'] = sdata[14]
+                    tkmf5_coll = sdb[mdb["5tkmf"]]
+                    tkmf5_coll.update({'名称': ybdd['名称']}, {'$set': ybdd}, True)
+        elif spider.name == '10days_kailian_money_flow':
+            body = item['content']
+            body = (body.decode('utf-8')).replace("var jMgwlSkv=", "")
+            # print('内容===== ', body)
+            if isinstance(body, list):
+                print('body 类型===== ', '列表')
+            if isinstance(body, dict):
+                print('body 类型===== ', '字典')
+            if isinstance(body, str):
+                print('body 类型===== ', '字符串')
+                pages, rdata = body.split(',', 1)
+                rdata = rdata[:-1]
+                list_data = eval(rdata.split(':', 1)[1])
+                print('获取到的数据：  ', list_data)
+                for item in list_data:
+                    ybdd = {}
+                    sdata = item.split(',')
+                    ybdd['名称'] = sdata[2]
+                    ybdd['10日涨跌幅'] = sdata[3]+'%'
+                    ybdd['10日主力净流入-净额'] = changeWan2Yi(float(sdata[4]))
+                    ybdd['10日主力净流入-净占比'] = sdata[5]+'%'
+
+                    ybdd['10日超大单净流入-净额'] = changeWan2Yi(float(sdata[6]))
+                    ybdd['10日超大单净流入-净占比'] = sdata[7]+'%'
+
+                    ybdd['10日大单净流入-净额'] = changeWan2Yi(float(sdata[8]))
+                    ybdd['10日大单净流入-净占比'] = sdata[9]+'%'
+
+                    ybdd['10日中单净流入-净额'] = changeWan2Yi(float(sdata[10]))
+                    ybdd['10日中单净流入-净占比'] = sdata[11]+'%'
+
+                    ybdd['10日小单净流入-净额'] = changeWan2Yi(float(sdata[12]))
+                    ybdd['10日小单净流入-净占比'] = sdata[13]+'%'
+
+                    ybdd['10日主力净流入-最大股'] = sdata[14]
+                    tkmf10_coll = sdb[mdb["10tkmf"]]
+                    tkmf10_coll.update({'名称': ybdd['名称']}, {'$set': ybdd}, True)
         return item
 
 
@@ -176,6 +408,13 @@ if __name__ == '__main__':
     #     print('body 类型===== ', '列表')
     # if isinstance(body, dict):
     #     print('body 类型===== ', '字典')
+    sdata = '-12774'
+    # sdata = '12774'
+    # sdata = '30277'
+    # sdata = '1954'
+    # sdata = '138307.98'
+    rr = changeWan2Yi(float(sdata))
+    print(rr)
     pass
     # xg_coll = sdb[mdb["xg"]]
     # ybdd = {}
