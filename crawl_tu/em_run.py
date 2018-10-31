@@ -1,5 +1,5 @@
 # coding=utf-8
-# import subprocess
+import os
 from multiprocessing import Process
 from scrapy import cmdline
 
@@ -10,6 +10,11 @@ def do_crawl(spider):
         cmdline.execute(cmd.split())
     except Exception as e:
         print('发生错误=====', e)
+
+
+def testdata():
+    print('test....')
+    pass
 
 
 def crawl_east_data():
@@ -31,7 +36,8 @@ def crawl_east_data():
 
 if __name__ == '__main__':
     crawl_east_data()
-
+    # testdata()
+    # os.system("pause")
 
 
 
