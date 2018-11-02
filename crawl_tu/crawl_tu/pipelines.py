@@ -380,6 +380,12 @@ class CrawlTuPipeline(object):
                     ybdd['10日主力净流入-最大股'] = sdata[14]
                     tkmf10_coll = sdb[mdb["10tkmf"]]
                     tkmf10_coll.update({'名称': ybdd['名称']}, {'$set': ybdd}, True)
+        elif spider.name == 'fcoin_spider':
+            ybdd = {}
+            vChange = item['vChange']
+            ybdd['Change'] = vChange + '%'
+            dfcoin_coll = sdb[mdb["fcoin"]]
+            dfcoin_coll.update({'Change': ybdd['Change']}, {'$set': ybdd}, True)
         return item
 
 

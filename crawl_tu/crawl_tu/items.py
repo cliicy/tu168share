@@ -13,6 +13,7 @@ class CrawlTuItem(Item):
     # pass
     # head = Field()
     content = Field()
+    vChange = Field  # 涨跌幅
     # data = Field()
     # code = Field()
     # name = Field()

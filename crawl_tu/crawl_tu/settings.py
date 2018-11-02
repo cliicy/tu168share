@@ -83,7 +83,8 @@ emongodb = {
     "10mf": '10day_hangye_money_flow',  # 10日行业资金流向 document
     "tkmf": 'today_kailian_money_flow',  # 今日概念板块资金流向 document
     "5tkmf": '5days_kailian_money_flow',  # 5日概念板块资金流向 document
-    "10tkmf": '10days_kailian_money_flow'  # 10日概念板块资金流向 document
+    "10tkmf": '10days_kailian_money_flow',  # 10日概念板块资金流向 document
+    "fcoin": 'fcoin'
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
