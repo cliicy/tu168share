@@ -14,7 +14,7 @@ BOT_NAME = 'crawl_tu'
 SPIDER_MODULES = ['crawl_tu.spiders']
 NEWSPIDER_MODULE = 'crawl_tu.spiders'
 
-
+HTTPERROR_ALLOWED_CODES = [400]
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'crawl_tu (+http://www.yourdomain.com)'
 
@@ -52,9 +52,10 @@ ROBOTSTXT_OBEY = True
 
 # Enable or disable downloader middlewares
 # See https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
-# DOWNLOADER_MIDDLEWARES = {
-#    'crawl_tu.middlewares.CrawlTuDownloaderMiddleware': 543,
-# }
+DOWNLOADER_MIDDLEWARES = {
+   # 'crawl_tu.middlewares.CrawlTuDownloaderMiddleware': 543,
+   # 'crawl_tu.middlewares.CrawlTuDownloaderMiddleware': None,
+}
 
 # Enable or disable extensions
 # See https://doc.scrapy.org/en/latest/topics/extensions.html

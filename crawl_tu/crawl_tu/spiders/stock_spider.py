@@ -11,39 +11,51 @@ class EastMoneySpider(scrapy.Spider):
         'User_Agent': 'User-Agent:Mozilla/5.0 (X11;Linux x86_64)'
                       ' AppleWebKit/537.36 (KHTML, like Gecko)'
                       ' Chrome/63.0.3239.84 Safari/537.36',
-        'Host': 'data.eastmoney.com',
-        'Referer': 'http://data.eastmoney.com/report/'
+        # 'Host': 'stock.eastmoney.com',
+        # 'Referer': 'http://stock.eastmoney.com/report.html'
+        'Host': 'http://jgy.com/',
+        'Referer': 'http://jgy.com/'
+
     }
 
     def grab_head(self, response):
-        a_space = response.xpath('//div[@class="content tb14"]/table[@class="t1"]/thead[@class="h432"]/tr[1]'
-                                 '/th[position()<9]')
-        sa_space = response.xpath('//div[@class="content tb14"]/table[@class="t1"]/thead[@class="h432"]/tr[2]'
-                                  '/th[position()<5]')
-        head = []
-        n = 2
-        pos = 0
-        for a in a_space:
-            ss = a.xpath('string(.)').extract()[0]
-            head.append(ss)
-            print('测试---', ss)
-        for sa in sa_space:
-            ss = sa.xpath('string(.)').extract()[0]
-            ss = "".join(ss.split())
-            head.append('{0}-{1}'.format(ylist[n % 2], ss))
-            pos += 1
-            if pos > 1:
-                n += 1
-            print('测试 子预测栏目---', ss)
+        news = {}
+        news['auth'] = 'luo'
+        news['link'] = 'http://google.com'
+        news['title'] = 'hello'
+        news['time'] = '2018-11-02'
+        return news
+        pass
+        a_space = response.xpath('.//ul/li')
+        # a_space = response.xpath('//div[@id="NewsList1_UpdatePanel1"]//li/text()')
 
-        return head
+        print(a_space)
+        # sa_space = response.xpath('//div[@class="content tb14"]/table[@class="t1"]/thead[@class="h432"]/tr[2]'
+        #                           '/th[position()<5]')
+        news = []
+        # n = 2
+        # pos = 0
+        for a in a_space:
+            ss = a.xpath('string(.)').extract()
+        #     head.append(ss)
+            print('测试---', ss)
+        # for sa in sa_space:
+        #     ss = sa.xpath('string(.)').extract()[0]
+        #     ss = "".join(ss.split())
+        #     head.append('{0}-{1}'.format(ylist[n % 2], ss))
+        #     pos += 1
+        #     if pos > 1:
+        #         n += 1
+        #     print('测试 子预测栏目---', ss)
+        #
+        return news
 
     def grap_stock_data(self, response):
         a_space = response.xpath('//div[@class="content tb14"]/table[@class="t1"]/thead[@class="h432"]/'
-                                 'following-sibling::tbody')
-        sa_space = a_space.xpath('/following-sibling::text()')  # //*[@id="dt_1"]/tbody/tr[1]/td[7]
-        print(a_space)
-        print(sa_space)
+                                 'following-sibling::text()')
+        # sa_space = a_space.xpath('/following-sibling::text()')  # //*[@id="dt_1"]/tbody/tr[1]/td[7]
+        print('a_space', a_space)
+        # print(sa_space)
         # a_each = a_space.xpath('//*')
         # print(a_each)
         # for each in a_space:
@@ -69,14 +81,15 @@ class EastMoneySpider(scrapy.Spider):
         pass
 
     def start_requests(self):
-        urls = ['http://data.eastmoney.com/report/xg.html']
+        # urls = ['http://stock.eastmoney.com/report.html']
+        urls = ['http://jgy.com/']
         for url in urls:
             yield scrapy.Request(url=url, headers=self.headers, callback=self.parse)
 
     def parse(self, response):
         item = CrawlTuItem()
-        item['head'] = self.grab_head(response)
-        self.grap_stock_data(response)
+        item['news'] = self.grab_head(response)
+        # self.grap_stock_data(response)
         # self.grap_next_page(response)
         yield item
 

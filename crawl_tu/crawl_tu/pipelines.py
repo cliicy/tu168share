@@ -29,6 +29,8 @@ def changeWan2Yi(num):
 
 class CrawlTuPipeline(object):
     def process_item(self, item, spider):
+        if spider.name == 'esstock_spider':
+            print(item['news'])
         if spider.name == 'gg_yanbao':
             p_coll = sdb[mdb["gg"]]
             ylist = ['2018预测-', '2019预测-', '2020预测-']
