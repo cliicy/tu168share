@@ -14,7 +14,7 @@ BOT_NAME = 'crawl_tu'
 SPIDER_MODULES = ['crawl_tu.spiders']
 NEWSPIDER_MODULE = 'crawl_tu.spiders'
 
-HTTPERROR_ALLOWED_CODES = [400]
+HTTPERROR_ALLOWED_CODES = [504]
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'crawl_tu (+http://www.yourdomain.com)'
 

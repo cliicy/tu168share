@@ -30,3 +30,6 @@ class CrawlTuItem(Item):
     # num = Field()
     # url = Field()
 
+    site_name = Field()
+    url = Field()
+
