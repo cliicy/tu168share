@@ -54,7 +54,6 @@ class EastMoneySpider(scrapy.Spider):
 
     def start_requests(self):
         urls = ['https://exchange.fcoin.com/ex/main/btc/usdt']
-        urls = ['F:\\Projects\\vTrade\\tcrawl\\mycrawler\\fcoin.html']
         for url in urls:
             yield scrapy.Request(url=url, headers=self.headers, callback=self.parse)
 
