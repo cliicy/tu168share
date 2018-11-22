@@ -14,7 +14,8 @@ BOT_NAME = 'crawl_tu'
 SPIDER_MODULES = ['crawl_tu.spiders']
 NEWSPIDER_MODULE = 'crawl_tu.spiders'
 
-HTTPERROR_ALLOWED_CODES = [504]
+# HTTPERROR_ALLOWED_CODES = [400, 504]
+HTTPERROR_ALLOWED_CODES = [400]
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 # USER_AGENT = 'crawl_tu (+http://www.yourdomain.com)'
 
@@ -34,7 +35,7 @@ ROBOTSTXT_OBEY = False
 # CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
-# COOKIES_ENABLED = False
+COOKIES_ENABLED = False
 
 # Disable Telnet Console (enabled by default)
 # TELNETCONSOLE_ENABLED = False
@@ -86,7 +87,10 @@ emongodb = {
     "tkmf": 'today_kailian_money_flow',  # 今日概念板块资金流向 document
     "5tkmf": '5days_kailian_money_flow',  # 5日概念板块资金流向 document
     "10tkmf": '10days_kailian_money_flow',  # 10日概念板块资金流向 document
-    "fcoin": 'fcoin'
+    "fcoin": 'fcoin',
+    "marketP1": 'dw_market',
+    "coin_logo": 'dw_coin_logo',
+    "AI_News": 'jgy'
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

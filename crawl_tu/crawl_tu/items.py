@@ -9,12 +9,11 @@ from scrapy import Item, Field
 
 class CrawlTuItem(Item):
     # define the fields for your item here like:
-    xg = Field()
+    # xg = Field()
     # pass
-    # head = Field()
-    news = Field()
-    content = Field()
-    vChange = Field  # 涨跌幅
+    # news = Field()
+    # content = Field()
+    # vChange = Field  # 涨跌幅
     # data = Field()
     # code = Field()
     # name = Field()

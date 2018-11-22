@@ -15,6 +15,8 @@ mongo_url = 'mongodb://' + mdb["user"] + \
             mdb["port"] + '/' + mdb["db"]
 conn = MongoClient(mongo_url)
 sdb = conn[mdb["db"]]
+jgy_coll = sdb[mdb["AI_News"]]
+logo_coll = sdb[mdb["coin_logo"]]
 
 
 def changeWan2Yi(num):
@@ -29,6 +31,8 @@ def changeWan2Yi(num):
 
 class CrawlTuPipeline(object):
     def process_item(self, item, spider):
+        if spider.name == 'jgy':
+            print('jgy')
         if spider.name == 'esstock_spider':
             print(item['news'])
         if spider.name == 'gg_yanbao':
