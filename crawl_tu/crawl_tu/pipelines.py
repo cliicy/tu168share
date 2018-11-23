@@ -17,6 +17,7 @@ conn = MongoClient(mongo_url)
 sdb = conn[mdb["db"]]
 jgy_coll = sdb[mdb["AI_News"]]
 logo_coll = sdb[mdb["coin_logo"]]
+fxh_coll = sdb[mdb["feixiaohao"]]
 
 
 def changeWan2Yi(num):

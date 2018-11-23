@@ -90,6 +90,7 @@ emongodb = {
     "fcoin": 'fcoin',
     "marketP1": 'dw_market',
     "coin_logo": 'dw_coin_logo',
+    "feixiaohao": 'dw_fxh',
     "AI_News": 'jgy'
 }
 
