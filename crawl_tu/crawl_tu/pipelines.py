@@ -18,6 +18,7 @@ sdb = conn[mdb["db"]]
 jgy_coll = sdb[mdb["AI_News"]]
 logo_coll = sdb[mdb["coin_logo"]]
 fxh_coll = sdb[mdb["feixiaohao"]]
+rate_coll = sdb[mdb["rate"]]
 
 
 def changeWan2Yi(num):

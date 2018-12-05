@@ -91,6 +91,7 @@ emongodb = {
     "marketP1": 'dw_market',
     "coin_logo": 'dw_coin_logo',
     "feixiaohao": 'dw_fxh',
+    "rate": 'dw_currency_rate',
     "AI_News": 'jgy'
 }
 
